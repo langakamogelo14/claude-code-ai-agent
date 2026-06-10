@@ -37,6 +37,7 @@ def main():
                 }
             }
         }
+        ]
     )
 
     #Handling the Response
