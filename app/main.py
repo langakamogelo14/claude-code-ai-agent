@@ -35,10 +35,10 @@ def main():
                             }
                         },
                         "required": ["file_path"]
-                    }
-                }
+                    },
+                },
             }
-        ]
+        ],
     )
 
     #Handling the Response
