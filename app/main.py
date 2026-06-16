@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import json
+import subprocess  # Added for running shell commands
 from openai import OpenAI
 
 API_KEY = os.getenv("OPENROUTER_API_KEY") 
@@ -65,6 +66,24 @@ def main():
                             }
                         }
                     }
+                },
+                # --- BASH TOOL ---
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "Bash",
+                        "description": "Execute a shell command",
+                        "parameters": {
+                            "type": "object",
+                            "required": ["command"],
+                            "properties": {
+                                "command": {
+                                    "type": "string",
+                                    "description": "The command to execute"
+                                }
+                            }
+                        }
+                    }
                 }
             ]
         )
@@ -105,12 +124,35 @@ def main():
                     content = tool_args.get("content")
                     
                     try:
-                        # "w" mode creates the file if it doesn't exist, or overwrites if it does
                         with open(file_path, "w", encoding="utf-8") as f:
                             f.write(content)
                         result = "File written successfully."
                     except Exception as e:
                         result = f"Error writing file: {e}"
+                    
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": result
+                    })
+
+                # --- EXECUTE BASH TOOL ---
+                elif tc.function.name == "Bash":
+                    tool_args = json.loads(tc.function.arguments)
+                    command = tool_args.get("command")
+                    
+                    try:
+                        # Execute command, capturing both standard output and error output streams
+                        completed_process = subprocess.run(
+                            command,
+                            shell=True,
+                            capture_output=True,
+                            text=True
+                        )
+                        # Combine standard output and error messages so the AI sees the full picture
+                        result = completed_process.stdout + completed_process.stderr
+                    except Exception as e:
+                        result = f"Error executing command: {e}"
                     
                     messages.append({
                         "role": "tool",
