@@ -1,34 +1,35 @@
-[![progress-banner](https://backend.codecrafters.io/progress/claude-code/3d8cd50b-da4b-46d0-bbfb-f71f85bb4155)](https://app.codecrafters.io/users/langakamogelo14?r=2qF)
+# 🤖 Autonomous CLI Development Agent
 
-This is a starting point for Python solutions to the
-["Build Your own Claude Code" Challenge](https://codecrafters.io/challenges/claude-code).
+An autonomous, terminal-based AI software engineering assistant built entirely in Python. This agent utilizes Large Language Models (LLMs) via REST APIs to autonomously navigate local file systems, execute shell commands, and perform intelligent code edits in a continuous REPL (Read-Eval-Print Loop).
 
-Claude Code is an AI coding assistant that uses Large Language Models (LLMs) to
-understand code and perform actions through tool calls. In this challenge,
-you'll build your own Claude Code from scratch by implementing an LLM-powered
-coding assistant.
+## 🚀 Core Capabilities
 
-Along the way you'll learn about HTTP RESTful APIs, OpenAI-compatible tool
-calling, agent loop, and how to integrate multiple tools into an AI assistant.
+Unlike standard chatbots, this agent features an autonomous loop with functional tool-calling. Once given a prompt, it will independently decide which tools to use, observe the results, and iterate until the task is fully complete.
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+* **File System I/O (`Read` & `Write`):** Autonomously opens, reads, generates, and overwrites local files to fix bugs or scaffold new code.
+* **Shell Execution (`Bash`):** Direct integration with the system shell (`subprocess`) allowing the agent to run tests, install dependencies, and manipulate directories.
+* **Contextual Memory:** Manages complex state by continuously appending tool execution results and API responses back into the conversation history array.
 
-# Passing the first stage
+## ⚙️ System Architecture
 
-The entry point for your `claude-code` implementation is in `app/main.py`. Study
-and uncomment the relevant code, and submit to pass the first stage:
+The agent is built on a stateless-to-stateful architecture. Since LLM APIs are inherently stateless, the Python core acts as the "brain," managing the memory and physical environment.
 
-```sh
-codecrafters submit
-```
+1.  **Input:** User provides a natural language prompt via the CLI.
+2.  **Reasoning:** The Anthropic Claude 3.5 Haiku model processes the prompt and returns structured JSON defining necessary tool calls.
+3.  **Execution:** Python parses the JSON arguments, executes the local system command, and captures `stdout`/`stderr`.
+4.  **Feedback:** The local execution result is appended to the message history and sent back to the LLM to inform its next decision.
 
-# Stage 2 & beyond
+## 🛠️ Technical Stack
 
-Note: This section is for stages 2 and beyond.
+* **Language:** Python 3
+* **Libraries:** `argparse`, `os`, `sys`, `json`, `subprocess`
+* **API Integration:** OpenRouter (OpenAI-compatible client format) 
+* **Model:** Anthropic Claude 3.5 Haiku
 
-1. Ensure you have `uv` installed locally.
-2. Run `./your_program.sh` to run your program, which is implemented in
-   `app/main.py`.
-3. Run `codecrafters submit` to submit your solution to CodeCrafters. Test
-   output will be streamed to your terminal.
+## 💡 Key Engineering Learnings
+
+Building this project provided deep, hands-on experience with modern software development concepts:
+* **API Boundaries & JSON Parsing:** Safely extracting and typing arguments passed dynamically from an external REST API.
+* **Subprocess Management:** Securely executing shell commands from within a Python script while intercepting standard output and error streams.
+* **State Management:** Designing an autonomous `while` loop that accurately maintains conversation history and links tool responses to specific `tool_call_id`s without duplicating API requests.
+
