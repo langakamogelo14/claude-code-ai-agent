@@ -51,7 +51,27 @@ def main():
     #TODO: Uncomment the following line to pass the first stage
     print(chat.choices[0].message.content) 
     #Digs into the JSON bundle returned by the API, grabs the very first reply (choices[0]), finds the message, extracts the raw text content, and prints it to your terminal screen.
+   
 
+   
+         
+        
+        
+    message = chat.choices[0].message
+
+    # 1. If the AI wants to use a tool, do this:
+    if message.tool_calls:
+        for tc in message.tool_calls:
+            args = json.loads(tc.function.arguments)
+            
+            if tc.function.name == "Read":
+                with open(args["file_path"], "r") as f:
+                    # Using end="" prevents Python from adding an accidental blank line
+                    print(f.read(), end="")
+
+    # 2. OTHERWISE, if the AI just wants to talk, do this:
+    elif message.content:
+        print(message.content)
 
 if __name__ == "__main__":
     main()
