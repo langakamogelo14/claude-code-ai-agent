@@ -51,21 +51,35 @@ def main():
          
         
         
-    message = chat.choices[0].message
+   message = chat.choices[0].message
+        
+        # 3. Append the AI's action/response to the history so it remembers it
+        messages.append(message)
 
-    # 1. If the AI wants to use a tool, do this:
-    if message.tool_calls:
-        for tc in message.tool_calls:
-            args = json.loads(tc.function.arguments)
-            
-            if tc.function.name == "Read":
-                with open(args["file_path"], "r") as f:
-                    # Using end="" prevents Python from adding an accidental blank line
-                    print(f.read(), end="")
-
-    # 2. OTHERWISE, if the AI just wants to talk, do this:
-    elif message.content:
-        print(message.content)
+        # 4. Handle Tool Calls
+        if message.tool_calls:
+            for tc in message.tool_calls:
+                if tc.function.name == "Read":
+                    tool_args = json.loads(tc.function.arguments)
+                    file_path = tool_args.get("file_path")
+                    
+                    try:
+                        with open(file_path, "r", encoding="utf-8") as f:
+                            result = f.read()
+                    except Exception as e:
+                        result = f"Error reading file: {e}"
+                    
+                    # 5. Append the file contents back to the history
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": result
+                    })
+                    
+        # 6. If no tools were called, the AI is talking to us. Print and break the loop.
+        elif message.content:
+            print(message.content)
+            break # This successfully ends the program
 
 if __name__ == "__main__":
     main()
