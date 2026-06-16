@@ -47,7 +47,7 @@ def main():
         raise RuntimeError("no choices in response") #safety check. Ensures the server actually sent a reply back.
 
     # You can use print statements as follows for debugging, they'll be visible when running tests.
-    print("Logs from your program will appear here!", file=sys.stderr)
+    
 
     #TODO: Uncomment the following line to pass the first stage
     print(chat.choices[0].message.content) 
