@@ -4,8 +4,8 @@ import sys
 import json
 from openai import OpenAI
 
-API_KEY = os.getenv("OPENROUTER_API_KEY") # Securely looks up my private password (API key) without hardcoding it directly into the script.
-BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1") # Sets the web address of where the prompt will be sent.
+API_KEY = os.getenv("OPENROUTER_API_KEY") 
+BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1") 
 
 def main():
     p = argparse.ArgumentParser()
@@ -13,9 +13,9 @@ def main():
     args = p.parse_args()
 
     if not API_KEY:
-        raise RuntimeError("OPENROUTER_API_KEY is not set") # If the program couldn't find my password it crashes, rather than sending a broken request.
+        raise RuntimeError("OPENROUTER_API_KEY is not set") 
 
-    client = OpenAI(api_key=API_KEY, base_url=BASE_URL) # Packages the API key & the server URL that will carry my data across the internet
+    client = OpenAI(api_key=API_KEY, base_url=BASE_URL) 
 
     # 1. Initialize the conversation history
     messages = [{"role": "user", "content": args.p}]
@@ -26,6 +26,7 @@ def main():
             model="anthropic/claude-haiku-4.5",
             messages=messages,
             tools=[
+                # --- READ TOOL ---
                 {
                     "type": "function",
                     "function": {
@@ -42,12 +43,34 @@ def main():
                             "required": ["file_path"]
                         }
                     }
+                },
+                # --- WRITE TOOL ---
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "Write",
+                        "description": "Write content to a file",
+                        "parameters": {
+                            "type": "object",
+                            "required": ["file_path", "content"],
+                            "properties": {
+                                "file_path": {
+                                    "type": "string",
+                                    "description": "The path of the file to write to"
+                                },
+                                "content": {
+                                    "type": "string",
+                                    "description": "The content to write to the file"
+                                }
+                            }
+                        }
+                    }
                 }
             ]
         )
 
         if not chat.choices or len(chat.choices) == 0:
-            raise RuntimeError("no choices in response") # safety check. Ensures the server actually sent a reply back.
+            raise RuntimeError("no choices in response")
 
         message = chat.choices[0].message
         
@@ -57,6 +80,8 @@ def main():
         # 4. Handle Tool Calls
         if message.tool_calls:
             for tc in message.tool_calls:
+                
+                # --- EXECUTE READ TOOL ---
                 if tc.function.name == "Read":
                     tool_args = json.loads(tc.function.arguments)
                     file_path = tool_args.get("file_path")
@@ -67,14 +92,33 @@ def main():
                     except Exception as e:
                         result = f"Error reading file: {e}"
                     
-                    # 5. Append the file contents back to the history
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": result
+                    })
+
+                # --- EXECUTE WRITE TOOL ---
+                elif tc.function.name == "Write":
+                    tool_args = json.loads(tc.function.arguments)
+                    file_path = tool_args.get("file_path")
+                    content = tool_args.get("content")
+                    
+                    try:
+                        # "w" mode creates the file if it doesn't exist, or overwrites if it does
+                        with open(file_path, "w", encoding="utf-8") as f:
+                            f.write(content)
+                        result = "File written successfully."
+                    except Exception as e:
+                        result = f"Error writing file: {e}"
+                    
                     messages.append({
                         "role": "tool",
                         "tool_call_id": tc.id,
                         "content": result
                     })
                     
-        # 6. Break the loop when a standard text response is given
+        # 5. Break the loop when a standard text response is given
         elif message.content:
             print(message.content)
             break 
