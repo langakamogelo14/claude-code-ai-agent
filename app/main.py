@@ -45,13 +45,6 @@ def main():
     #Handling the Response
     if not chat.choices or len(chat.choices) == 0:
         raise RuntimeError("no choices in response") #safety check. Ensures the server actually sent a reply back.
-
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
-    
-
-    #TODO: Uncomment the following line to pass the first stage
-    print(chat.choices[0].message.content) 
-    #Digs into the JSON bundle returned by the API, grabs the very first reply (choices[0]), finds the message, extracts the raw text content, and prints it to your terminal screen.
    
 
    
